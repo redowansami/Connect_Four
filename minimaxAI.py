@@ -34,7 +34,7 @@ def evaluate_position(board, piece):
             window = [board[r+i][c] for i in range(4)]
             score += score_window(window, piece)
     
-        for r in range(rows-3):
+    for r in range(rows-3):
         for c in range(cols-3):
             window = [board[r+i][c+i] for i in range(4)]
             score += score_window(window, piece)

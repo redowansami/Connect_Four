@@ -1,12 +1,11 @@
-# main.py
+
 import pygame
 from board import create_board, drop_piece, is_valid_location, get_next_open_row, winning_move
 from minimaxAI import minimax
 
-# Initialize Pygame
+
 pygame.init()
 
-# Constants
 ROWS = 6
 COLS = 7
 CELL_SIZE = 100
@@ -15,7 +14,6 @@ HEIGHT = (ROWS + 1) * CELL_SIZE
 RADIUS = int(CELL_SIZE / 2 - 5)
 MAX_DEPTH = 4
 
-# Colors
 BLUE = (0, 0, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
