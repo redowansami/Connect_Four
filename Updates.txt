@@ -1,0 +1,8 @@
+- Update UI
+- Update Evaluate Position Function
+- Introduce Levels
+- Game modes:
+
+	# AI vs Human
+	# Human vs Human
+	# AI vs AI (Two AI will use different function. Best one wins)
