@@ -1,7 +1,7 @@
 - Update UI
 - Update Evaluate Position Function
 - Introduce Levels
-- Game modes:
+- Game Modes:
 
 	# AI vs Human
 	# Human vs Human
