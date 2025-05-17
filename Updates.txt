@@ -6,3 +6,5 @@
 	# AI vs Human
 	# Human vs Human
 	# AI vs AI (Two AI will use different function. Best one wins)
+
+Error in Human vs Human: Fixed

@@ -10,7 +10,6 @@ CELL_SIZE = 100
 WIDTH = COLS * CELL_SIZE
 HEIGHT = (ROWS + 1) * CELL_SIZE
 RADIUS = int(CELL_SIZE / 2 - 5)
-MAX_DEPTH = 4
 
 BLUE = (58, 44, 161)
 BLACK = (0, 0, 0)
@@ -20,10 +19,8 @@ WHITE = (255, 255, 255)
 GRAY = (128, 128, 128)
 DARK_GRAY = (50, 50, 50)
 
-
-GRADIENT_TOP = (75, 0, 130)  
-GRADIENT_BOTTOM = (255, 105, 180)# Pink
-
+GRADIENT_TOP = (75, 0, 130)
+GRADIENT_BOTTOM = (255, 105, 180)
 
 class Button:
     def __init__(self, text, x, y, width, height, color, hover_color, text_color):
@@ -33,9 +30,9 @@ class Button:
         self.hover_color = hover_color
         self.text_color = text_color
         try:
-            self.font = pygame.font.Font("Game Paused DEMO.otf", 40)  # Use custom font
+            self.font = pygame.font.Font("Game Paused DEMO.otf", 40)
         except pygame.error:
-            self.font = pygame.font.SysFont("sans", 40)  # Fallback to sans
+            self.font = pygame.font.SysFont("sans", 40)
             print("Custom font not found, using 'sans' fallback.")
 
     def draw(self, screen):
@@ -78,9 +75,9 @@ def draw_main_menu(screen, buttons, background_image):
             b = GRADIENT_TOP[2] + (GRADIENT_BOTTOM[2] - GRADIENT_TOP[2]) * y / HEIGHT
             pygame.draw.line(screen, (int(r), int(g), int(b)), (0, y), (WIDTH, y))
     try:
-        title_font = pygame.font.Font("Game Paused DEMO.otf", 60)  # Use custom font
+        title_font = pygame.font.Font("Game Paused DEMO.otf", 60)
     except pygame.error:
-        title_font = pygame.font.SysFont("sans", 60)  # Fallback
+        title_font = pygame.font.SysFont("sans", 60)
     title = title_font.render("Connect Four", True, WHITE)
     screen.blit(title, (WIDTH//2 - title.get_width()//2, 100))
     for button in buttons:
@@ -97,16 +94,35 @@ def draw_choose_option(screen, buttons, background_image):
             b = GRADIENT_TOP[2] + (GRADIENT_BOTTOM[2] - GRADIENT_TOP[2]) * y / HEIGHT
             pygame.draw.line(screen, (int(r), int(g), int(b)), (0, y), (WIDTH, y))
     try:
-        title_font = pygame.font.Font("Game Paused DEMO.otf", 60)  # Use custom font
+        title_font = pygame.font.Font("Game Paused DEMO.otf", 60)
     except pygame.error:
-        title_font = pygame.font.SysFont("sans", 60)  # Fallback
+        title_font = pygame.font.SysFont("sans", 60)
     title = title_font.render("Choose Game Mode", True, WHITE)
     screen.blit(title, (WIDTH//2 - title.get_width()//2, 100))
     for button in buttons:
         button.draw(screen)
     pygame.display.update()
 
-def play_ai_vs_player(screen):
+def draw_difficulty_menu(screen, buttons, background_image):
+    if background_image is not None:
+        screen.blit(background_image, (0, 0))
+    else:
+        for y in range(HEIGHT):
+            r = GRADIENT_TOP[0] + (GRADIENT_BOTTOM[0] - GRADIENT_TOP[0]) * y / HEIGHT
+            g = GRADIENT_TOP[1] + (GRADIENT_BOTTOM[1] - GRADIENT_TOP[1]) * y / HEIGHT
+            b = GRADIENT_TOP[2] + (GRADIENT_BOTTOM[2] - GRADIENT_TOP[2]) * y / HEIGHT
+            pygame.draw.line(screen, (int(r), int(g), int(b)), (0, y), (WIDTH, y))
+    try:
+        title_font = pygame.font.Font("Game Paused DEMO.otf", 60)
+    except pygame.error:
+        title_font = pygame.font.SysFont("sans", 60)
+    title = title_font.render("Select Difficulty", True, WHITE)
+    screen.blit(title, (WIDTH//2 - title.get_width()//2, 100))
+    for button in buttons:
+        button.draw(screen)
+    pygame.display.update()
+
+def play_ai_vs_player(screen, depth):
     board = create_board()
     game_over = False
     turn = 0
@@ -138,12 +154,12 @@ def play_ai_vs_player(screen):
                             label = pygame.font.Font("Game Paused DEMO.otf", 75).render("Player 1 wins!", 1, ASPARAGUS)
                         except pygame.error:
                             label = pygame.font.SysFont("sans", 75).render("Player 1 wins!", 1, ASPARAGUS)
-                        label_rect = label.get_rect(center=(WIDTH//2, HEIGHT//2))
+                        label_rect = label.get_rect(topright=(WIDTH - 20, 20))
                         bg_rect = label_rect.inflate(20, 20)
-                        pygame.draw.rect(screen, BLACK, bg_rect)  # Changed to BLACK for contrast
+                        pygame.draw.rect(screen, BLACK, bg_rect)
                         screen.blit(label, label_rect)
                         pygame.display.update()
-                        pygame.time.wait(500)  # Ensure rendering
+                        pygame.time.wait(500)
                         game_over = True
                     
                     turn = 1
@@ -153,7 +169,7 @@ def play_ai_vs_player(screen):
         if turn == 1 and not game_over:
             import time
             start_time = time.time()
-            col, _ = minimax(board, MAX_DEPTH, -float('inf'), float('inf'), True, 2, start_time)
+            col, _ = minimax(board, depth, -float('inf'), float('inf'), True, 2, start_time)
             
             if col is not None and is_valid_location(board, col):
                 row = get_next_open_row(board, col)
@@ -165,12 +181,12 @@ def play_ai_vs_player(screen):
                         label = pygame.font.Font("Game Paused DEMO.otf", 75).render("AI wins!", 1, PINK)
                     except pygame.error:
                         label = pygame.font.SysFont("sans", 75).render("AI wins!", 1, PINK)
-                    label_rect = label.get_rect(center=(WIDTH//2, HEIGHT//2))
+                    label_rect = label.get_rect(topright=(WIDTH - 20, 20))
                     bg_rect = label_rect.inflate(20, 20)
-                    pygame.draw.rect(screen, BLACK, bg_rect)  # Changed to BLACK for contrast
+                    pygame.draw.rect(screen, BLACK, bg_rect)
                     screen.blit(label, label_rect)
                     pygame.display.update()
-                    pygame.time.wait(500)  # Ensure rendering
+                    pygame.time.wait(500)
                     game_over = True
                 
                 turn = 0
@@ -184,10 +200,9 @@ def play_ai_vs_player(screen):
 def play_playerA_vs_playerB(screen):
     board = create_board()
     game_over = False
-    turn = 0  # 0 for Player 1, 1 for Player 2
+    turn = 0
     draw_board(screen, board)
     
-    # Check for draw condition
     def is_board_full(board):
         for c in range(COLS):
             if is_valid_location(board, c):
@@ -215,46 +230,48 @@ def play_playerA_vs_playerB(screen):
                 
                 if is_valid_location(board, col):
                     row = get_next_open_row(board, col)
-                    player = turn + 1  # Player 1 uses 1, Player 2 uses 2
+                    player = turn + 1
                     drop_piece(board, row, col, player)
                     
-                    # Check for win
                     if winning_move(board, player):
                         draw_board(screen, board)
-                        win_message = f"Player {player} wins!"
-                        print(f"Win detected for Player {player}")  # Debug print
+                        if player == 1:
+                            win_message = "Player I wins!"
+                        else:
+                            win_message = "Player II wins!"
+                        print(f"Win detected for Player {player}")
                         try:
-                            label = pygame.font.Font("Game Paused DEMO.otf", 75).render(win_message, 1, ASPARAGUS if player == 1 else PINK)  # Player 1: ASPARAGUS, Player 2: PINK
+                            label = pygame.font.Font("Game Paused DEMO.otf", 75).render(win_message, 1, ASPARAGUS if player == 1 else PINK)
                         except pygame.error:
                             label = pygame.font.SysFont("sans", 75).render(win_message, 1, ASPARAGUS if player == 1 else PINK)
-                        label_rect = label.get_rect(center=(WIDTH//2, HEIGHT//2))
+                        label_rect = label.get_rect(topright=(WIDTH - 20, 20))
                         bg_rect = label_rect.inflate(20, 20)
-                        pygame.draw.rect(screen, BLACK, bg_rect)  # Changed to BLACK for contrast
+                        pygame.draw.rect(screen, BLACK, bg_rect)
                         screen.blit(label, label_rect)
                         pygame.display.update()
-                        print(f"Rendered win message: {win_message}")  # Debug print
-                        pygame.time.wait(500)  # Ensure the message is rendered
+                        print(f"Rendered win message: {win_message}")
+                        pygame.time.wait(500)
                         game_over = True
-                        break  # Exit the event loop to prevent further drawing
+                        break
                     
                     elif is_board_full(board):
                         draw_board(screen, board)
-                        print("Game ended in a draw")  # Debug print
+                        print("Game ended in a draw")
                         try:
                             label = pygame.font.Font("Game Paused DEMO.otf", 75).render("Draw!", 1, WHITE)
                         except pygame.error:
                             label = pygame.font.SysFont("sans", 75).render("Draw!", 1, WHITE)
-                        label_rect = label.get_rect(center=(WIDTH//2, HEIGHT//2))
+                        label_rect = label.get_rect(topright=(WIDTH - 20, 20))
                         bg_rect = label_rect.inflate(20, 20)
-                        pygame.draw.rect(screen, BLACK, bg_rect)  # Changed to BLACK for contrast
+                        pygame.draw.rect(screen, BLACK, bg_rect)
                         screen.blit(label, label_rect)
                         pygame.display.update()
-                        print("Rendered draw message")  # Debug print
-                        pygame.time.wait(500)  # Ensure the message is rendered
+                        print("Rendered draw message")
+                        pygame.time.wait(500)
                         game_over = True
-                        break  # Exit the event loop to prevent further drawing
+                        break
                     
-                    turn = 1 - turn  # Switch turn (0 to 1, 1 to 0)
+                    turn = 1 - turn
                     if not game_over:
                         draw_board(screen, board)
         
@@ -262,11 +279,13 @@ def play_playerA_vs_playerB(screen):
             pygame.time.wait(3000)
             return "main_menu"
 
+def play_ai_vs_ai(screen, depth):
+    return "main_menu"  # Placeholder, not implemented
+
 def main():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Connect Four")
     
-    # Load the background image after setting the display mode
     background_image = None
     try:
         background_image = pygame.image.load("background.jpg").convert()
@@ -277,19 +296,24 @@ def main():
         background_image = None
         print("Falling back to gradient background.")
     
-    # Main menu buttons, centered horizontally
     start_button = Button("Start", (WIDTH - 200) // 2, 200, 200, 60, BLUE, GRAY, WHITE)
     choose_button = Button("Choose Option", (WIDTH - 300) // 2, 300, 300, 60, BLUE, GRAY, WHITE)
     quit_button = Button("Quit", (WIDTH - 200) // 2, 400, 200, 60, BLUE, GRAY, WHITE)
     main_menu_buttons = [start_button, choose_button, quit_button]
     
-    # Choose option buttons
-    ai_vs_player_button = Button("AI vs Player", 250, 200, 200, 60, BLUE, GRAY, WHITE)
+    ai_vs_player_button = Button("AI vs Player", (WIDTH - 300) // 2, 200, 300, 60, BLUE, GRAY, WHITE)
     playerA_vs_playerB_button = Button("Player vs Player", (WIDTH - 300) // 2, 300, 300, 60, BLUE, GRAY, WHITE)
-    ai_vs_ai_button = Button("AI vs AI", 250, 400, 200, 60, BLUE, GRAY, WHITE)
+    ai_vs_ai_button = Button("AI vs AI", (WIDTH - 300) // 2, 400, 300, 60, BLUE, GRAY, WHITE)
     choose_option_buttons = [ai_vs_player_button, playerA_vs_playerB_button, ai_vs_ai_button]
     
+    easy_button = Button("Easy", (WIDTH - 200) // 2, 200, 200, 60, BLUE, GRAY, WHITE)
+    medium_button = Button("Medium", (WIDTH - 200) // 2, 300, 200, 60, BLUE, GRAY, WHITE)
+    hard_button = Button("Hard", (WIDTH - 200) // 2, 400, 200, 60, BLUE, GRAY, WHITE)
+    difficulty_buttons = [easy_button, medium_button, hard_button]
+    
     state = "main_menu"
+    next_state = None
+    selected_depth = 4  # Default depth
     
     while True:
         if state == "main_menu":
@@ -299,7 +323,8 @@ def main():
                     pygame.quit()
                     return
                 if start_button.is_clicked(event):
-                    state = play_ai_vs_player(screen)
+                    state = "difficulty"
+                    next_state = "ai_vs_player"
                 if choose_button.is_clicked(event):
                     state = "choose_option"
                 if quit_button.is_clicked(event):
@@ -313,11 +338,38 @@ def main():
                     pygame.quit()
                     return
                 if ai_vs_player_button.is_clicked(event):
-                    state = play_ai_vs_player(screen)
+                    state = "difficulty"
+                    next_state = "ai_vs_player"
                 if playerA_vs_playerB_button.is_clicked(event):
                     state = play_playerA_vs_playerB(screen)
                 if ai_vs_ai_button.is_clicked(event):
-                    state = "main_menu"  # Placeholder, not implemented
+                    state = "difficulty"
+                    next_state = "ai_vs_ai"
+        
+        elif state == "difficulty":
+            draw_difficulty_menu(screen, difficulty_buttons, background_image)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    return
+                if easy_button.is_clicked(event):
+                    selected_depth = 1
+                    if next_state == "ai_vs_player":
+                        state = play_ai_vs_player(screen, selected_depth)
+                    elif next_state == "ai_vs_ai":
+                        state = play_ai_vs_ai(screen, selected_depth)
+                if medium_button.is_clicked(event):
+                    selected_depth = 2
+                    if next_state == "ai_vs_player":
+                        state = play_ai_vs_player(screen, selected_depth)
+                    elif next_state == "ai_vs_ai":
+                        state = play_ai_vs_ai(screen, selected_depth)
+                if hard_button.is_clicked(event):
+                    selected_depth = 4
+                    if next_state == "ai_vs_player":
+                        state = play_ai_vs_player(screen, selected_depth)
+                    elif next_state == "ai_vs_ai":
+                        state = play_ai_vs_ai(screen, selected_depth)
         
         elif state == "quit":
             pygame.quit()
