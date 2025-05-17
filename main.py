@@ -69,16 +69,22 @@ class TextInput:
         self.text = ""
         self.max_length = max_length
         self.active = False
+        self.submitted = False  # New flag to track if input is complete
         self.font = pygame.font.SysFont("sans", 30)
         self.color = GRAY
         self.active_color = WHITE
+        self.submitted_color = DARK_GRAY  # Color for submitted input
         self.text_color = BLACK
 
     def handle_event(self, event):
+        if self.submitted:
+            return None  # Ignore events if input is already submitted
         if event.type == pygame.MOUSEBUTTONDOWN:
             self.active = self.rect.collidepoint(event.pos)
         if event.type == pygame.KEYDOWN and self.active:
-            if event.key == pygame.K_RETURN:
+            if event.key == pygame.K_RETURN and self.text.strip():
+                self.submitted = True
+                self.active = False
                 return self.text if self.text.strip() else "Player"
             elif event.key == pygame.K_BACKSPACE:
                 self.text = self.text[:-1]
@@ -87,19 +93,47 @@ class TextInput:
         return None
 
     def draw(self, screen):
-        pygame.draw.rect(screen, self.active_color if self.active else self.color, self.rect)
+        # Choose color based on state
+        if self.submitted:
+            pygame.draw.rect(screen, self.submitted_color, self.rect)
+        elif self.active:
+            pygame.draw.rect(screen, self.active_color, self.rect)
+        else:
+            pygame.draw.rect(screen, self.color, self.rect)
         prompt_surf = self.font.render(self.prompt, True, self.text_color)
         text_surf = self.font.render(self.text, True, self.text_color)
         screen.blit(prompt_surf, (self.rect.x + 10, self.rect.y - 30))
         screen.blit(text_surf, (self.rect.x + 10, self.rect.y + 10))
-        pygame.display.update()
 
 def get_player_names(screen, game_mode, background_image):
     names = []
     prompts = ["Enter Player 1 Name:"] if game_mode == "ai_vs_player" else ["Enter Player 1 Name:", "Enter Player 2 Name:"]
     input_boxes = [TextInput((WIDTH - 300) // 2, 300 + i * 100, 300, 40, prompt) for i, prompt in enumerate(prompts)]
     
+    # Activate the first input box by default
+    if input_boxes:
+        input_boxes[0].active = True
+
+    clock = pygame.time.Clock()  # To control frame rate
+
     while len(names) < len(prompts):
+        # Handle events
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return None
+            for box in input_boxes:
+                if not box.submitted:  # Only handle events for non-submitted boxes
+                    result = box.handle_event(event)
+                    if result:
+                        names.append(result)
+                        # Activate the next unsubmitted box, if any
+                        for next_box in input_boxes:
+                            if not next_box.submitted:
+                                next_box.active = True
+                                break
+
+        # Draw the screen
         if background_image is not None:
             screen.blit(background_image, (0, 0))
         else:
@@ -116,22 +150,13 @@ def get_player_names(screen, game_mode, background_image):
         title = title_font.render("Enter Player Names", True, WHITE)
         screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 100))
         
+        # Draw all input boxes, regardless of submission state
         for box in input_boxes:
-            if box.text not in names:
-                box.draw(screen)
+            box.draw(screen)
         
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                return None
-            for box in input_boxes:
-                if box.text not in names:
-                    result = box.handle_event(event)
-                    if result:
-                        names.append(result)
-        
-        pygame.display.update()
-    
+        pygame.display.flip()  # Update the entire screen once per frame
+        clock.tick(60)  # Limit to 60 FPS to reduce CPU usage
+
     return names
 
 def draw_board(screen, board):
@@ -470,7 +495,7 @@ def main():
     
     state = "main_menu"
     next_state = None
-    selected_depth = 4  # Default depth
+    selected_depth = 3  # Default depth
     player_names = None
     
     while True:
