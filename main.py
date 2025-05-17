@@ -1,3 +1,4 @@
+
 import pygame
 from board import create_board, drop_piece, is_valid_location, get_next_open_row, winning_move
 from minimaxAI import minimax
@@ -21,6 +22,16 @@ DARK_GRAY = (50, 50, 50)
 
 GRADIENT_TOP = (75, 0, 130)
 GRADIENT_BOTTOM = (255, 105, 180)
+
+# Initialize sound effects with proper error handling
+drop_sound = win_sound = draw_sound = None
+try:
+    drop_sound = pygame.mixer.Sound("drop.wav")
+    win_sound = pygame.mixer.Sound("win.wav")
+    draw_sound = pygame.mixer.Sound("draw.wav")
+    print("Sound files loaded successfully.")
+except pygame.error as e:
+    print(f"Error loading sound files: {e}. Sound effects disabled.")
 
 class Button:
     def __init__(self, text, x, y, width, height, color, hover_color, text_color):
@@ -50,6 +61,78 @@ class Button:
             if self.rect.collidepoint(event.pos):
                 return True
         return False
+
+class TextInput:
+    def __init__(self, x, y, width, height, prompt, max_length=20):
+        self.rect = pygame.Rect(x, y, width, height)
+        self.prompt = prompt
+        self.text = ""
+        self.max_length = max_length
+        self.active = False
+        self.font = pygame.font.SysFont("sans", 30)
+        self.color = GRAY
+        self.active_color = WHITE
+        self.text_color = BLACK
+
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            self.active = self.rect.collidepoint(event.pos)
+        if event.type == pygame.KEYDOWN and self.active:
+            if event.key == pygame.K_RETURN:
+                return self.text if self.text.strip() else "Player"
+            elif event.key == pygame.K_BACKSPACE:
+                self.text = self.text[:-1]
+            elif len(self.text) < self.max_length and event.unicode.isprintable():
+                self.text += event.unicode
+        return None
+
+    def draw(self, screen):
+        pygame.draw.rect(screen, self.active_color if self.active else self.color, self.rect)
+        prompt_surf = self.font.render(self.prompt, True, self.text_color)
+        text_surf = self.font.render(self.text, True, self.text_color)
+        screen.blit(prompt_surf, (self.rect.x + 10, self.rect.y - 30))
+        screen.blit(text_surf, (self.rect.x + 10, self.rect.y + 10))
+        pygame.display.update()
+
+def get_player_names(screen, game_mode, background_image):
+    names = []
+    prompts = ["Enter Player 1 Name:"] if game_mode == "ai_vs_player" else ["Enter Player 1 Name:", "Enter Player 2 Name:"]
+    input_boxes = [TextInput((WIDTH - 300) // 2, 300 + i * 100, 300, 40, prompt) for i, prompt in enumerate(prompts)]
+    
+    while len(names) < len(prompts):
+        if background_image is not None:
+            screen.blit(background_image, (0, 0))
+        else:
+            for y in range(HEIGHT):
+                r = GRADIENT_TOP[0] + (GRADIENT_BOTTOM[0] - GRADIENT_TOP[0]) * y / HEIGHT
+                g = GRADIENT_TOP[1] + (GRADIENT_BOTTOM[1] - GRADIENT_TOP[1]) * y / HEIGHT
+                b = GRADIENT_TOP[2] + (GRADIENT_BOTTOM[2] - GRADIENT_TOP[2]) * y / HEIGHT
+                pygame.draw.line(screen, (int(r), int(g), int(b)), (0, y), (WIDTH, y))
+        
+        try:
+            title_font = pygame.font.Font("Game Paused DEMO.otf", 60)
+        except pygame.error:
+            title_font = pygame.font.SysFont("sans", 60)
+        title = title_font.render("Enter Player Names", True, WHITE)
+        screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 100))
+        
+        for box in input_boxes:
+            if box.text not in names:
+                box.draw(screen)
+        
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return None
+            for box in input_boxes:
+                if box.text not in names:
+                    result = box.handle_event(event)
+                    if result:
+                        names.append(result)
+        
+        pygame.display.update()
+    
+    return names
 
 def draw_board(screen, board):
     for c in range(COLS):
@@ -122,7 +205,7 @@ def draw_difficulty_menu(screen, buttons, background_image):
         button.draw(screen)
     pygame.display.update()
 
-def play_ai_vs_player(screen, depth):
+def play_ai_vs_player(screen, depth, player_name):
     board = create_board()
     game_over = False
     turn = 0
@@ -147,18 +230,22 @@ def play_ai_vs_player(screen, depth):
                 if is_valid_location(board, col):
                     row = get_next_open_row(board, col)
                     drop_piece(board, row, col, 1)
+                    if drop_sound:
+                        drop_sound.play()
                     
                     if winning_move(board, 1):
                         draw_board(screen, board)
                         try:
-                            label = pygame.font.Font("Game Paused DEMO.otf", 75).render("Player 1 wins!", 1, ASPARAGUS)
+                            label = pygame.font.Font("Game Paused DEMO.otf", 75).render(f"{player_name} won!!", 1, ASPARAGUS)
                         except pygame.error:
-                            label = pygame.font.SysFont("sans", 75).render("Player 1 wins!", 1, ASPARAGUS)
+                            label = pygame.font.SysFont("sans", 75).render(f"{player_name} won!!", 1, ASPARAGUS)
                         label_rect = label.get_rect(topright=(WIDTH - 20, 20))
                         bg_rect = label_rect.inflate(20, 20)
                         pygame.draw.rect(screen, BLACK, bg_rect)
                         screen.blit(label, label_rect)
                         pygame.display.update()
+                        if win_sound:
+                            win_sound.play()
                         pygame.time.wait(500)
                         game_over = True
                     
@@ -174,6 +261,8 @@ def play_ai_vs_player(screen, depth):
             if col is not None and is_valid_location(board, col):
                 row = get_next_open_row(board, col)
                 drop_piece(board, row, col, 2)
+                if drop_sound:
+                    drop_sound.play()
                 
                 if winning_move(board, 2):
                     draw_board(screen, board)
@@ -186,6 +275,8 @@ def play_ai_vs_player(screen, depth):
                     pygame.draw.rect(screen, BLACK, bg_rect)
                     screen.blit(label, label_rect)
                     pygame.display.update()
+                    if win_sound:
+                        win_sound.play()
                     pygame.time.wait(500)
                     game_over = True
                 
@@ -197,7 +288,7 @@ def play_ai_vs_player(screen, depth):
             pygame.time.wait(3000)
             return "main_menu"
 
-def play_playerA_vs_playerB(screen):
+def play_playerA_vs_playerB(screen, player_names):
     board = create_board()
     game_over = False
     turn = 0
@@ -232,14 +323,13 @@ def play_playerA_vs_playerB(screen):
                     row = get_next_open_row(board, col)
                     player = turn + 1
                     drop_piece(board, row, col, player)
+                    if drop_sound:
+                        drop_sound.play()
                     
                     if winning_move(board, player):
                         draw_board(screen, board)
-                        if player == 1:
-                            win_message = "Player I wins!"
-                        else:
-                            win_message = "Player II wins!"
-                        print(f"Win detected for Player {player}")
+                        win_message = f"{player_names[player-1]} won!!"
+                        print(f"Win detected for {player_names[player-1]}")
                         try:
                             label = pygame.font.Font("Game Paused DEMO.otf", 75).render(win_message, 1, ASPARAGUS if player == 1 else PINK)
                         except pygame.error:
@@ -249,7 +339,8 @@ def play_playerA_vs_playerB(screen):
                         pygame.draw.rect(screen, BLACK, bg_rect)
                         screen.blit(label, label_rect)
                         pygame.display.update()
-                        print(f"Rendered win message: {win_message}")
+                        if win_sound:
+                            win_sound.play()
                         pygame.time.wait(500)
                         game_over = True
                         break
@@ -266,7 +357,8 @@ def play_playerA_vs_playerB(screen):
                         pygame.draw.rect(screen, BLACK, bg_rect)
                         screen.blit(label, label_rect)
                         pygame.display.update()
-                        print("Rendered draw message")
+                        if draw_sound:
+                            draw_sound.play()
                         pygame.time.wait(500)
                         game_over = True
                         break
@@ -306,6 +398,8 @@ def play_ai_vs_ai(screen, depth):
             if col is not None and is_valid_location(board, col):
                 row = get_next_open_row(board, col)
                 drop_piece(board, row, col, piece)
+                if drop_sound:
+                    drop_sound.play()
                 draw_board(screen, board)
                 pygame.time.wait(500)  # 500ms delay for visualization
                 
@@ -319,6 +413,8 @@ def play_ai_vs_ai(screen, depth):
                     pygame.draw.rect(screen, BLACK, bg_rect)
                     screen.blit(label, label_rect)
                     pygame.display.update()
+                    if win_sound:
+                        win_sound.play()
                     pygame.time.wait(500)
                     game_over = True
                 
@@ -332,6 +428,8 @@ def play_ai_vs_ai(screen, depth):
                     pygame.draw.rect(screen, BLACK, bg_rect)
                     screen.blit(label, label_rect)
                     pygame.display.update()
+                    if draw_sound:
+                        draw_sound.play()
                     pygame.time.wait(500)
                     game_over = True
                 
@@ -373,6 +471,7 @@ def main():
     state = "main_menu"
     next_state = None
     selected_depth = 4  # Default depth
+    player_names = None
     
     while True:
         if state == "main_menu":
@@ -382,7 +481,7 @@ def main():
                     pygame.quit()
                     return
                 if start_button.is_clicked(event):
-                    state = "difficulty"
+                    state = "get_names"
                     next_state = "ai_vs_player"
                 if choose_button.is_clicked(event):
                     state = "choose_option"
@@ -397,13 +496,21 @@ def main():
                     pygame.quit()
                     return
                 if ai_vs_player_button.is_clicked(event):
-                    state = "difficulty"
+                    state = "get_names"
                     next_state = "ai_vs_player"
                 if playerA_vs_playerB_button.is_clicked(event):
-                    state = play_playerA_vs_playerB(screen)
+                    state = "get_names"
+                    next_state = "player_vs_player"
                 if ai_vs_ai_button.is_clicked(event):
                     state = "difficulty"
                     next_state = "ai_vs_ai"
+        
+        elif state == "get_names":
+            player_names = get_player_names(screen, next_state, background_image)
+            if player_names is None:
+                state = "quit"
+            else:
+                state = "difficulty" if next_state in ["ai_vs_player", "ai_vs_ai"] else play_playerA_vs_playerB(screen, player_names)
         
         elif state == "difficulty":
             draw_difficulty_menu(screen, difficulty_buttons, background_image)
@@ -414,19 +521,19 @@ def main():
                 if easy_button.is_clicked(event):
                     selected_depth = 2
                     if next_state == "ai_vs_player":
-                        state = play_ai_vs_player(screen, selected_depth)
+                        state = play_ai_vs_player(screen, selected_depth, player_names[0])
                     elif next_state == "ai_vs_ai":
                         state = play_ai_vs_ai(screen, selected_depth)
                 if medium_button.is_clicked(event):
                     selected_depth = 4
                     if next_state == "ai_vs_player":
-                        state = play_ai_vs_player(screen, selected_depth)
+                        state = play_ai_vs_player(screen, selected_depth, player_names[0])
                     elif next_state == "ai_vs_ai":
                         state = play_ai_vs_ai(screen, selected_depth)
                 if hard_button.is_clicked(event):
                     selected_depth = 6
                     if next_state == "ai_vs_player":
-                        state = play_ai_vs_player(screen, selected_depth)
+                        state = play_ai_vs_player(screen, selected_depth, player_names[0])
                     elif next_state == "ai_vs_ai":
                         state = play_ai_vs_ai(screen, selected_depth)
         
