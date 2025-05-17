@@ -20,22 +20,11 @@ WHITE = (255, 255, 255)
 GRAY = (128, 128, 128)
 DARK_GRAY = (50, 50, 50)
 
-# Define gradient colors based on your screenshot (blue to pink)
-GRADIENT_TOP = (75, 0, 130)  # Dark blue
-GRADIENT_BOTTOM = (255, 105, 180)  # Pink
 
-# Load the background image
-background_image = None
-try:
-    background_image = pygame.image.load("background.jpg").convert()  # Adjust file name to match yours
-    background_image = pygame.transform.scale(background_image, (WIDTH, HEIGHT))
-    print("Background image loaded successfully.")
-except pygame.error as e:
-    print(f"Error loading background image: {e}")
-    background_image = None
-    print("Falling back to gradient background.")
+GRADIENT_TOP = (75, 0, 130)  
+GRADIENT_BOTTOM = (255, 105, 180)# Pink
 
-# Button class for menu
+
 class Button:
     def __init__(self, text, x, y, width, height, color, hover_color, text_color):
         self.text = text
@@ -79,12 +68,10 @@ def draw_board(screen, board):
                 pygame.draw.circle(screen, PINK, (c*CELL_SIZE+CELL_SIZE/2, (ROWS-r-1)*CELL_SIZE+CELL_SIZE+CELL_SIZE/2), RADIUS)
     pygame.display.update()
 
-def draw_main_menu(screen, buttons):
-    # Draw the background image or gradient
+def draw_main_menu(screen, buttons, background_image):
     if background_image is not None:
         screen.blit(background_image, (0, 0))
     else:
-        # Create a simple vertical gradient from blue to pink
         for y in range(HEIGHT):
             r = GRADIENT_TOP[0] + (GRADIENT_BOTTOM[0] - GRADIENT_TOP[0]) * y / HEIGHT
             g = GRADIENT_TOP[1] + (GRADIENT_BOTTOM[1] - GRADIENT_TOP[1]) * y / HEIGHT
@@ -100,12 +87,10 @@ def draw_main_menu(screen, buttons):
         button.draw(screen)
     pygame.display.update()
 
-def draw_choose_option(screen, buttons):
-    # Draw the background image or gradient
+def draw_choose_option(screen, buttons, background_image):
     if background_image is not None:
         screen.blit(background_image, (0, 0))
     else:
-        # Create a simple vertical gradient from blue to pink
         for y in range(HEIGHT):
             r = GRADIENT_TOP[0] + (GRADIENT_BOTTOM[0] - GRADIENT_TOP[0]) * y / HEIGHT
             g = GRADIENT_TOP[1] + (GRADIENT_BOTTOM[1] - GRADIENT_TOP[1]) * y / HEIGHT
@@ -148,16 +133,17 @@ def play_ai_vs_player(screen):
                     drop_piece(board, row, col, 1)
                     
                     if winning_move(board, 1):
-                        draw_board(screen, board)  # Redraw board first
+                        draw_board(screen, board)
                         try:
-                            label = pygame.font.Font("Game Paused DEMO.otf", 75).render("Player 1 wins!", 1, BLACK)
+                            label = pygame.font.Font("Game Paused DEMO.otf", 75).render("Player 1 wins!", 1, ASPARAGUS)
                         except pygame.error:
-                            label = pygame.font.SysFont("sans", 75).render("Player 1 wins!", 1, BLACK)
+                            label = pygame.font.SysFont("sans", 75).render("Player 1 wins!", 1, ASPARAGUS)
                         label_rect = label.get_rect(center=(WIDTH//2, HEIGHT//2))
                         bg_rect = label_rect.inflate(20, 20)
-                        pygame.draw.rect(screen, DARK_GRAY, bg_rect)
+                        pygame.draw.rect(screen, BLACK, bg_rect)  # Changed to BLACK for contrast
                         screen.blit(label, label_rect)
                         pygame.display.update()
+                        pygame.time.wait(500)  # Ensure rendering
                         game_over = True
                     
                     turn = 1
@@ -174,16 +160,17 @@ def play_ai_vs_player(screen):
                 drop_piece(board, row, col, 2)
                 
                 if winning_move(board, 2):
-                    draw_board(screen, board)  # Redraw board first
+                    draw_board(screen, board)
                     try:
-                        label = pygame.font.Font("Game Paused DEMO.otf", 75).render("AI wins!", 1, BLACK)
+                        label = pygame.font.Font("Game Paused DEMO.otf", 75).render("AI wins!", 1, PINK)
                     except pygame.error:
-                        label = pygame.font.SysFont("sans", 75).render("AI wins!", 1, BLACK)
+                        label = pygame.font.SysFont("sans", 75).render("AI wins!", 1, PINK)
                     label_rect = label.get_rect(center=(WIDTH//2, HEIGHT//2))
                     bg_rect = label_rect.inflate(20, 20)
-                    pygame.draw.rect(screen, DARK_GRAY, bg_rect)
+                    pygame.draw.rect(screen, BLACK, bg_rect)  # Changed to BLACK for contrast
                     screen.blit(label, label_rect)
                     pygame.display.update()
+                    pygame.time.wait(500)  # Ensure rendering
                     game_over = True
                 
                 turn = 0
@@ -194,9 +181,101 @@ def play_ai_vs_player(screen):
             pygame.time.wait(3000)
             return "main_menu"
 
+def play_playerA_vs_playerB(screen):
+    board = create_board()
+    game_over = False
+    turn = 0  # 0 for Player 1, 1 for Player 2
+    draw_board(screen, board)
+    
+    # Check for draw condition
+    def is_board_full(board):
+        for c in range(COLS):
+            if is_valid_location(board, c):
+                return False
+        return True
+
+    while not game_over:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return "quit"
+            
+            if event.type == pygame.MOUSEMOTION:
+                pygame.draw.rect(screen, BLACK, (0, 0, WIDTH, CELL_SIZE))
+                posx = event.pos[0]
+                if turn == 0:
+                    pygame.draw.circle(screen, ASPARAGUS, (posx, CELL_SIZE/2), RADIUS)
+                else:
+                    pygame.draw.circle(screen, PINK, (posx, CELL_SIZE/2), RADIUS)
+                pygame.display.update()
+            
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pygame.draw.rect(screen, BLACK, (0, 0, WIDTH, CELL_SIZE))
+                posx = event.pos[0]
+                col = posx // CELL_SIZE
+                
+                if is_valid_location(board, col):
+                    row = get_next_open_row(board, col)
+                    player = turn + 1  # Player 1 uses 1, Player 2 uses 2
+                    drop_piece(board, row, col, player)
+                    
+                    # Check for win
+                    if winning_move(board, player):
+                        draw_board(screen, board)
+                        win_message = f"Player {player} wins!"
+                        print(f"Win detected for Player {player}")  # Debug print
+                        try:
+                            label = pygame.font.Font("Game Paused DEMO.otf", 75).render(win_message, 1, ASPARAGUS if player == 1 else PINK)  # Player 1: ASPARAGUS, Player 2: PINK
+                        except pygame.error:
+                            label = pygame.font.SysFont("sans", 75).render(win_message, 1, ASPARAGUS if player == 1 else PINK)
+                        label_rect = label.get_rect(center=(WIDTH//2, HEIGHT//2))
+                        bg_rect = label_rect.inflate(20, 20)
+                        pygame.draw.rect(screen, BLACK, bg_rect)  # Changed to BLACK for contrast
+                        screen.blit(label, label_rect)
+                        pygame.display.update()
+                        print(f"Rendered win message: {win_message}")  # Debug print
+                        pygame.time.wait(500)  # Ensure the message is rendered
+                        game_over = True
+                        break  # Exit the event loop to prevent further drawing
+                    
+                    elif is_board_full(board):
+                        draw_board(screen, board)
+                        print("Game ended in a draw")  # Debug print
+                        try:
+                            label = pygame.font.Font("Game Paused DEMO.otf", 75).render("Draw!", 1, WHITE)
+                        except pygame.error:
+                            label = pygame.font.SysFont("sans", 75).render("Draw!", 1, WHITE)
+                        label_rect = label.get_rect(center=(WIDTH//2, HEIGHT//2))
+                        bg_rect = label_rect.inflate(20, 20)
+                        pygame.draw.rect(screen, BLACK, bg_rect)  # Changed to BLACK for contrast
+                        screen.blit(label, label_rect)
+                        pygame.display.update()
+                        print("Rendered draw message")  # Debug print
+                        pygame.time.wait(500)  # Ensure the message is rendered
+                        game_over = True
+                        break  # Exit the event loop to prevent further drawing
+                    
+                    turn = 1 - turn  # Switch turn (0 to 1, 1 to 0)
+                    if not game_over:
+                        draw_board(screen, board)
+        
+        if game_over:
+            pygame.time.wait(3000)
+            return "main_menu"
+
 def main():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Connect Four")
+    
+    # Load the background image after setting the display mode
+    background_image = None
+    try:
+        background_image = pygame.image.load("background.jpg").convert()
+        background_image = pygame.transform.scale(background_image, (WIDTH, HEIGHT))
+        print("Background image loaded successfully.")
+    except pygame.error as e:
+        print(f"Error loading background image: {e}")
+        background_image = None
+        print("Falling back to gradient background.")
     
     # Main menu buttons, centered horizontally
     start_button = Button("Start", (WIDTH - 200) // 2, 200, 200, 60, BLUE, GRAY, WHITE)
@@ -206,15 +285,15 @@ def main():
     
     # Choose option buttons
     ai_vs_player_button = Button("AI vs Player", 250, 200, 200, 60, BLUE, GRAY, WHITE)
-    player_vs_player_button = Button("Player vs Player", (WIDTH - 300) // 2, 300, 300, 60, BLUE, GRAY, WHITE)
+    playerA_vs_playerB_button = Button("Player vs Player", (WIDTH - 300) // 2, 300, 300, 60, BLUE, GRAY, WHITE)
     ai_vs_ai_button = Button("AI vs AI", 250, 400, 200, 60, BLUE, GRAY, WHITE)
-    choose_option_buttons = [ai_vs_player_button, player_vs_player_button, ai_vs_ai_button]
+    choose_option_buttons = [ai_vs_player_button, playerA_vs_playerB_button, ai_vs_ai_button]
     
     state = "main_menu"
     
     while True:
         if state == "main_menu":
-            draw_main_menu(screen, main_menu_buttons)
+            draw_main_menu(screen, main_menu_buttons, background_image)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -228,15 +307,17 @@ def main():
                     return
         
         elif state == "choose_option":
-            draw_choose_option(screen, choose_option_buttons)
+            draw_choose_option(screen, choose_option_buttons, background_image)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     return
                 if ai_vs_player_button.is_clicked(event):
                     state = play_ai_vs_player(screen)
-                if player_vs_player_button.is_clicked(event) or ai_vs_ai_button.is_clicked(event):
-                    state = "main_menu"
+                if playerA_vs_playerB_button.is_clicked(event):
+                    state = play_playerA_vs_playerB(screen)
+                if ai_vs_ai_button.is_clicked(event):
+                    state = "main_menu"  # Placeholder, not implemented
         
         elif state == "quit":
             pygame.quit()
