@@ -169,7 +169,7 @@ def play_ai_vs_player(screen, depth):
         if turn == 1 and not game_over:
             import time
             start_time = time.time()
-            col, _ = minimax(board, depth, -float('inf'), float('inf'), True, 2, start_time)
+            col, _ = minimax(board, depth, -float('inf'), float('inf'), True, 2, start_time, heuristic_type="original")
             
             if col is not None and is_valid_location(board, col):
                 row = get_next_open_row(board, col)
@@ -280,7 +280,66 @@ def play_playerA_vs_playerB(screen):
             return "main_menu"
 
 def play_ai_vs_ai(screen, depth):
-    return "main_menu"  # Placeholder, not implemented
+    board = create_board()
+    game_over = False
+    turn = 0  # 0 for AI 1 (heuristic1), 1 for AI 2 (heuristic2)
+    draw_board(screen, board)
+    
+    def is_board_full(board):
+        for c in range(COLS):
+            if is_valid_location(board, c):
+                return False
+        return True
+
+    while not game_over:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return "quit"
+        
+        if not game_over:
+            import time
+            start_time = time.time()
+            heuristic = "heuristic1" if turn == 0 else "heuristic2"
+            piece = 1 if turn == 0 else 2
+            col, _ = minimax(board, depth, -float('inf'), float('inf'), True, piece, start_time, heuristic_type=heuristic)
+            
+            if col is not None and is_valid_location(board, col):
+                row = get_next_open_row(board, col)
+                drop_piece(board, row, col, piece)
+                draw_board(screen, board)
+                pygame.time.wait(500)  # 500ms delay for visualization
+                
+                if winning_move(board, piece):
+                    try:
+                        label = pygame.font.Font("Game Paused DEMO.otf", 75).render(f"AI {piece} wins!", 1, ASPARAGUS if piece == 1 else PINK)
+                    except pygame.error:
+                        label = pygame.font.SysFont("sans", 75).render(f"AI {piece} wins!", 1, ASPARAGUS if piece == 1 else PINK)
+                    label_rect = label.get_rect(topright=(WIDTH - 20, 20))
+                    bg_rect = label_rect.inflate(20, 20)
+                    pygame.draw.rect(screen, BLACK, bg_rect)
+                    screen.blit(label, label_rect)
+                    pygame.display.update()
+                    pygame.time.wait(500)
+                    game_over = True
+                
+                elif is_board_full(board):
+                    try:
+                        label = pygame.font.Font("Game Paused DEMO.otf", 75).render("Draw!", 1, WHITE)
+                    except pygame.error:
+                        label = pygame.font.SysFont("sans", 75).render("Draw!", 1, WHITE)
+                    label_rect = label.get_rect(topright=(WIDTH - 20, 20))
+                    bg_rect = label_rect.inflate(20, 20)
+                    pygame.draw.rect(screen, BLACK, bg_rect)
+                    screen.blit(label, label_rect)
+                    pygame.display.update()
+                    pygame.time.wait(500)
+                    game_over = True
+                
+                turn = 1 - turn
+        
+        if game_over:
+            pygame.time.wait(3000)
+            return "main_menu"
 
 def main():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -353,19 +412,19 @@ def main():
                     pygame.quit()
                     return
                 if easy_button.is_clicked(event):
-                    selected_depth = 1
-                    if next_state == "ai_vs_player":
-                        state = play_ai_vs_player(screen, selected_depth)
-                    elif next_state == "ai_vs_ai":
-                        state = play_ai_vs_ai(screen, selected_depth)
-                if medium_button.is_clicked(event):
                     selected_depth = 2
                     if next_state == "ai_vs_player":
                         state = play_ai_vs_player(screen, selected_depth)
                     elif next_state == "ai_vs_ai":
                         state = play_ai_vs_ai(screen, selected_depth)
-                if hard_button.is_clicked(event):
+                if medium_button.is_clicked(event):
                     selected_depth = 4
+                    if next_state == "ai_vs_player":
+                        state = play_ai_vs_player(screen, selected_depth)
+                    elif next_state == "ai_vs_ai":
+                        state = play_ai_vs_ai(screen, selected_depth)
+                if hard_button.is_clicked(event):
+                    selected_depth = 6
                     if next_state == "ai_vs_player":
                         state = play_ai_vs_player(screen, selected_depth)
                     elif next_state == "ai_vs_ai":
