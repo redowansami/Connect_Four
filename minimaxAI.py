@@ -100,7 +100,7 @@ def evaluate_heuristic1(board, piece, opponent):
                 r1 = r_start + window.index(0)
                 r2 = r_start + window.index(0, window.index(0)+1)
                 if is_square_available(board, r1, c_start) or is_square_available(board, r2, c_start):
-                    return window.count(0) * 4
+                    return 50000
                 return 0
             elif direction == 'diagonal_pos':
                 r1 = r_start + window.index(0)
@@ -108,7 +108,7 @@ def evaluate_heuristic1(board, piece, opponent):
                 r2 = r_start + window.index(0, window.index(0)+1)
                 c2 = c_start + window.index(0, window.index(0)+1)
                 if is_square_available(board, r1, c1) or is_square_available(board, r2, c2):
-                    return window.count(0) * 4
+                    return 50000
                 return 0
             elif direction == 'diagonal_neg':
                 r1 = r_start - window.index(0)
@@ -116,7 +116,7 @@ def evaluate_heuristic1(board, piece, opponent):
                 r2 = r_start - window.index(0, window.index(0)+1)
                 c2 = c_start + window.index(0, window.index(0)+1)
                 if is_square_available(board, r1, c1) or is_square_available(board, r2, c2):
-                    return window.count(0) * 4
+                    return 50000
                 return 0
         return 0
 
