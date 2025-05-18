@@ -544,7 +544,7 @@ def main():
                     pygame.quit()
                     return
                 if easy_button.is_clicked(event):
-                    selected_depth = 2
+                    selected_depth = 1
                     if next_state == "ai_vs_player":
                         state = play_ai_vs_player(screen, selected_depth, player_names[0])
                     elif next_state == "ai_vs_ai":
