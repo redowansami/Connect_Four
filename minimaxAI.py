@@ -2,48 +2,126 @@ import math
 import copy
 import time
 
+# def evaluate_position(board, piece):
+#     score = 0
+#     opponent = 2 if piece == 1 else 1
+#     rows = len(board)
+#     cols = len(board[0])
+    
+#     center_array = [board[r][cols//2] for r in range(rows)]
+#     center_count = center_array.count(piece)
+#     score += center_count * 3
+    
+#     def score_window(window, player):
+#         score = 0
+#         if window.count(player) == 4:
+#             score += 100
+#         elif window.count(player) == 3 and window.count(0) == 1:
+#             score += 5
+#         elif window.count(player) == 2 and window.count(0) == 2:
+#             score += 2
+#         if window.count(opponent) == 3 and window.count(0) == 1:
+#             score -= 4
+#         return score
+    
+#     for r in range(rows):
+#         for c in range(cols-3):
+#             window = [board[r][c+i] for i in range(4)]
+#             score += score_window(window, piece)
+    
+#     for c in range(cols):
+#         for r in range(rows-3):
+#             window = [board[r+i][c] for i in range(4)]
+#             score += score_window(window, piece)
+    
+#     for r in range(rows-3):
+#         for c in range(cols-3):
+#             window = [board[r+i][c+i] for i in range(4)]
+#             score += score_window(window, piece)
+    
+#     for r in range(3, rows):
+#         for c in range(cols-3):
+#             window = [board[r-i][c+i] for i in range(4)]
+#             score += score_window(window, piece)
+    
+#     return score
+
 def evaluate_position(board, piece):
     score = 0
     opponent = 2 if piece == 1 else 1
     rows = len(board)
     cols = len(board[0])
     
-    center_array = [board[r][cols//2] for r in range(rows)]
-    center_count = center_array.count(piece)
-    score += center_count * 3
-    
     def score_window(window, player):
         score = 0
+        opp = 2 if player == 1 else 1
         if window.count(player) == 4:
-            score += 100
+            score += 100000
         elif window.count(player) == 3 and window.count(0) == 1:
-            score += 5
+            score += 100
         elif window.count(player) == 2 and window.count(0) == 2:
-            score += 2
-        if window.count(opponent) == 3 and window.count(0) == 1:
-            score -= 4
+            score += 10
+        elif window.count(player) == 1 and window.count(0) == 3:
+            score += 1
+
+        # Defensive scoring
+        if window.count(opp) == 3 and window.count(0) == 1:
+            score -= 200  # block strong opponent threat
+        elif window.count(opp) == 2 and window.count(0) == 2:
+            score -= 15
         return score
-    
+
+    # Center column preference (reduced slightly)
+    center_col = cols // 2
+    center_array = [board[r][center_col] for r in range(rows)]
+    center_count = center_array.count(piece)
+    score += center_count * 6  # Was 8, reduced slightly
+
+    # Edge column penalty
     for r in range(rows):
-        for c in range(cols-3):
+        if board[r][0] == piece:
+            score -= 1
+        if board[r][cols-1] == piece:
+            score -= 1
+
+    # Score horizontal
+    for r in range(rows):
+        for c in range(cols - 3):
             window = [board[r][c+i] for i in range(4)]
             score += score_window(window, piece)
-    
+
+    # Score vertical
     for c in range(cols):
-        for r in range(rows-3):
+        for r in range(rows - 3):
             window = [board[r+i][c] for i in range(4)]
             score += score_window(window, piece)
-    
-    for r in range(rows-3):
-        for c in range(cols-3):
+
+    # Score positive diagonal
+    for r in range(rows - 3):
+        for c in range(cols - 3):
             window = [board[r+i][c+i] for i in range(4)]
             score += score_window(window, piece)
-    
+
+    # Score negative diagonal
     for r in range(3, rows):
-        for c in range(cols-3):
+        for c in range(cols - 3):
             window = [board[r-i][c+i] for i in range(4)]
             score += score_window(window, piece)
-    
+
+    # Detect vertical edge threats
+    def detect_vertical_threat(c, player):
+        for r in range(rows - 3):
+            window = [board[r+i][c] for i in range(4)]
+            if window.count(player) == 3 and window.count(0) == 1:
+                return True
+        return False
+
+    # Penalize dangerous vertical threats in edge columns
+    if detect_vertical_threat(0, opponent):
+        score -= 150
+    if detect_vertical_threat(cols - 1, opponent):
+        score -= 150
+
     return score
 
 def evaluate_heuristic1(board, piece, opponent):
@@ -100,7 +178,7 @@ def evaluate_heuristic1(board, piece, opponent):
                 r1 = r_start + window.index(0)
                 r2 = r_start + window.index(0, window.index(0)+1)
                 if is_square_available(board, r1, c_start) or is_square_available(board, r2, c_start):
-                    return window.count(0) * 4
+                    return 50000
                 return 0
             elif direction == 'diagonal_pos':
                 r1 = r_start + window.index(0)
@@ -108,7 +186,7 @@ def evaluate_heuristic1(board, piece, opponent):
                 r2 = r_start + window.index(0, window.index(0)+1)
                 c2 = c_start + window.index(0, window.index(0)+1)
                 if is_square_available(board, r1, c1) or is_square_available(board, r2, c2):
-                    return window.count(0) * 4
+                    return 50000
                 return 0
             elif direction == 'diagonal_neg':
                 r1 = r_start - window.index(0)
@@ -116,7 +194,7 @@ def evaluate_heuristic1(board, piece, opponent):
                 r2 = r_start - window.index(0, window.index(0)+1)
                 c2 = c_start + window.index(0, window.index(0)+1)
                 if is_square_available(board, r1, c1) or is_square_available(board, r2, c2):
-                    return window.count(0) * 4
+                    return 50000
                 return 0
         return 0
 
