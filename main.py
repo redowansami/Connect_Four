@@ -14,8 +14,8 @@ RADIUS = int(CELL_SIZE / 2 - 5)
 # Changed board color to wood-type brown
 WOOD_BROWN = (139, 69, 19)
 BLACK = (0, 0, 0)
-ASPARAGUS = (129, 159, 109)
-PINK = (157, 17, 151)
+ASPARAGUS = (99, 129, 79)
+PINK = (127, 0, 121)
 WHITE = (255, 255, 255)
 GRAY = (128, 128, 128)
 DARK_GRAY = (50, 50, 50)
@@ -75,7 +75,7 @@ class TextInput:
         self.color = (139, 69, 19)  # WOOD_BROWN to match back button
         self.active_color = (169, 99, 49)  # Lighter wood shade for active
         self.submitted_color = (109, 39, 0)  # Darker wood shade for submitted
-        self.text_color = WHITE  # Changed to white for better contrast
+        self.text_color = BLACK  # Changed to white for better contrast
 
     def handle_event(self, event):
         if self.submitted:
@@ -447,19 +447,19 @@ def play_playerA_vs_playerB(screen, player_names):
             pygame.time.wait(3000)
             return "main_menu"
 
-# Updated play_ai_vs_ai with adjusted win box width
 def play_ai_vs_ai(screen, depth):
     background_image = pygame.image.load("final_back.jpeg").convert()
     background_image = pygame.transform.scale(background_image, (800, 600))
     print("Background image loaded successfully.")
     if background_image is not None:
         screen.blit(background_image, (0, 0))
+
     board = create_board()
     game_over = False
     turn = 0
     draw_board(screen, board)
     back_button = Button("Back", 20, 20, 100, 40, WOOD_BROWN, GRAY, WHITE)
-    
+
     def is_board_full(board):
         for c in range(COLS):
             if is_valid_location(board, c):
@@ -474,6 +474,7 @@ def play_ai_vs_ai(screen, depth):
                 return "quit"
             if back_button.is_clicked(event):
                 return "main_menu"
+
         if not game_over:
             import time
             start_time = time.time()
@@ -487,42 +488,55 @@ def play_ai_vs_ai(screen, depth):
                     drop_sound.play()
                 draw_board(screen, board)
                 pygame.time.wait(500)
+
                 if winning_move(board, piece):
-                    try:
-                        font = pygame.font.Font("Game Paused DEMO.otf", 80)
-                    except pygame.error:
-                        font = pygame.font.SysFont("sans", 80)
-                    label = font.render(f"AI {piece} Prevails!", 1, ASPARAGUS if piece == 1 else PINK)
-                    label_rect = label.get_rect(center=(800 // 2, 300))
-                    bg_rect = label_rect.inflate(30, 30)  # Reduced width
-                    pygame.draw.rect(screen, (0, 0, 0, 220), bg_rect, border_radius=25)
+                  
+                    font = pygame.font.SysFont("Arial", 60)
+
+                    if piece == 1:
+                        win_message = "AI 1 Prevails!"
+                        win_color = ASPARAGUS
+                    else:
+                        win_message = "AI 2 Prevails!"
+                        win_color = PINK
+
+                    print(f"Rendering: {win_message}")  # Debug
+
+                    label = font.render(win_message, True, win_color)
+                    label_rect = label.get_rect(center=(800 // 2, 500))
+                    bg_rect = label_rect.inflate(160, 80)
+
+                    pygame.draw.rect(screen, BLACK, bg_rect, border_radius=25)
                     pygame.draw.rect(screen, (255, 215, 0), bg_rect, 8, border_radius=25)
                     screen.blit(label, label_rect)
                     pygame.display.update()
+
                     if win_sound:
                         win_sound.play()
                     pygame.time.wait(2500)
                     game_over = True
+
                 elif is_board_full(board):
-                    try:
-                        font = pygame.font.Font("Game Paused DEMO.otf", 80)
-                    except pygame.error:
-                        font = pygame.font.SysFont("sans", 80)
-                    label = font.render("It's a Draw!", 1, WHITE)
-                    label_rect = label.get_rect(center=(800 // 2, 300))
-                    bg_rect = label_rect.inflate(30, 30)  # Reduced width
-                    pygame.draw.rect(screen, (0, 0, 0, 220), bg_rect, border_radius=25)
+                    font = pygame.font.SysFont("Arial", 60)
+                    label = font.render("It's a Draw!", True, WHITE)
+                    label_rect = label.get_rect(center=(800 // 2, 500))
+                    bg_rect = label_rect.inflate(160, 80)
+                    pygame.draw.rect(screen, BLACK, bg_rect, border_radius=25)
                     pygame.draw.rect(screen, (255, 215, 0), bg_rect, 8, border_radius=25)
                     screen.blit(label, label_rect)
                     pygame.display.update()
+
                     if draw_sound:
                         draw_sound.play()
                     pygame.time.wait(2500)
                     game_over = True
+
                 turn = 1 - turn
+
         if game_over:
             pygame.time.wait(3000)
             return "main_menu"
+
 
 
 # Updated main function to handle back button navigation
