@@ -6,16 +6,15 @@ pygame.init()
 
 ROWS = 6
 COLS = 7
-CELL_SIZE = 70  # Reduced from 80 to make board smaller
+CELL_SIZE = 70  
 WIDTH = COLS * CELL_SIZE
 HEIGHT = (ROWS + 1) * CELL_SIZE
 RADIUS = int(CELL_SIZE / 2 - 5)
 
-# Changed board color to wood-type brown
 WOOD_BROWN = (139, 69, 19)
 BLACK = (0, 0, 0)
-ASPARAGUS = (99, 129, 79)
-PINK = (127, 0, 121)
+ASPARAGUS = (255, 0, 0) #changed to red
+PINK = (34, 139, 34) #changed to green
 WHITE = (255, 255, 255)
 GRAY = (128, 128, 128)
 DARK_GRAY = (50, 50, 50)
@@ -23,7 +22,6 @@ DARK_GRAY = (50, 50, 50)
 GRADIENT_TOP = (75, 0, 130)
 GRADIENT_BOTTOM = (255, 105, 180)
 
-# Initialize sound effects with proper error handling
 drop_sound = win_sound = draw_sound = None
 try:
     drop_sound = pygame.mixer.Sound("drop.wav")
@@ -62,7 +60,6 @@ class Button:
                 return True
         return False
 
-# Updated TextInput class with box color similar to back button
 class TextInput:
     def __init__(self, x, y, width, height, prompt, max_length=20):
         self.rect = pygame.Rect(x, y, width, height)
@@ -72,10 +69,10 @@ class TextInput:
         self.active = False
         self.submitted = False
         self.font = pygame.font.SysFont("georgia", 26)
-        self.color = (139, 69, 19)  # WOOD_BROWN to match back button
-        self.active_color = (169, 99, 49)  # Lighter wood shade for active
-        self.submitted_color = (109, 39, 0)  # Darker wood shade for submitted
-        self.text_color = BLACK  # Changed to white for better contrast
+        self.color = (139, 69, 19)  
+        self.active_color = (169, 99, 49)  
+        self.submitted_color = (109, 39, 0)  
+        self.text_color = BLACK  
 
     def handle_event(self, event):
         if self.submitted:
@@ -108,7 +105,6 @@ class TextInput:
         screen.blit(text_surf, text_rect)
 
 
-# Updated get_player_names with back button
 def get_player_names(screen, game_mode, background_image):
     names = []
     prompts = ["Enter Player 1 Name:"] if game_mode == "ai_vs_player" else ["Enter Player 1 Name:", "Enter Player 2 Name:"]
@@ -165,9 +161,8 @@ def get_player_names(screen, game_mode, background_image):
 
 def draw_board(screen, board):
 
-    # Center the board
     board_x = (800 - WIDTH) // 2
-    board_y = (600 - HEIGHT) // 2  # Adjust y to remove black row at top
+    board_y = (600 - HEIGHT) // 2  
     board_image = None
     try:
         board_image = pygame.image.load("board_image.jpg").convert()
@@ -211,7 +206,6 @@ def draw_main_menu(screen, buttons, background_image):
         button.draw(screen)
     pygame.display.update()
 
-# Updated draw_choose_option with back button
 def draw_choose_option(screen, buttons, background_image):
     if background_image is not None:
         screen.blit(background_image, (0, 0))
@@ -235,7 +229,6 @@ def draw_choose_option(screen, buttons, background_image):
     pygame.display.update()
 
 
-# Updated draw_difficulty_menu with back button
 def draw_difficulty_menu(screen, buttons, background_image):
     if background_image is not None:
         screen.blit(background_image, (0, 0))
@@ -258,7 +251,6 @@ def draw_difficulty_menu(screen, buttons, background_image):
         button.draw(screen)
     pygame.display.update()
 
-# Updated play_ai_vs_player with adjusted win box width
 def play_ai_vs_player(screen, depth, player_name):
     background_image = pygame.image.load("final_back.jpeg").convert()
     background_image = pygame.transform.scale(background_image, (800, 600))
@@ -352,7 +344,6 @@ def play_ai_vs_player(screen, depth, player_name):
             return "main_menu"
 
 
-# Updated play_playerA_vs_playerB with adjusted winning text size
 def play_playerA_vs_playerB(screen, player_names):
     background_image = pygame.image.load("final_back.jpeg").convert()
     background_image = pygame.transform.scale(background_image, (800, 600))
@@ -537,9 +528,6 @@ def play_ai_vs_ai(screen, depth):
             pygame.time.wait(3000)
             return "main_menu"
 
-
-
-# Updated main function to handle back button navigation
 def main():
     screen = pygame.display.set_mode((800, 600))
     pygame.display.set_caption("Connect Four")
@@ -629,7 +617,7 @@ def main():
                 if back_button.is_clicked(event):
                     state = "choose_option"
                 if easy_button.is_clicked(event):
-                    selected_depth = 1
+                    selected_depth = 2
                     if next_state == "ai_vs_player":
                         state = play_ai_vs_player(screen, selected_depth, player_names[0])
                     elif next_state == "ai_vs_ai":
