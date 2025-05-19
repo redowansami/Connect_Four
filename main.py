@@ -75,7 +75,7 @@ class TextInput:
         self.color = (139, 69, 19)  # WOOD_BROWN to match back button
         self.active_color = (169, 99, 49)  # Lighter wood shade for active
         self.submitted_color = (109, 39, 0)  # Darker wood shade for submitted
-        self.text_color = WHITE  # Changed to white for better contrast
+        self.text_color = BLACK  # Changed to white for better contrast
 
     def handle_event(self, event):
         if self.submitted:
